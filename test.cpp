@@ -1,7 +1,7 @@
 #include "quake_heap.hpp"
 #include <unordered_map>
 int main(){
-	const unsigned int N = 100;
+	const unsigned int N = 1000;
 	using QH = QuakeHeap<int, double >;
 	QH pq;
 	using EntryIterator = std::unordered_map<int, QH::Entry>::iterator;
@@ -9,40 +9,46 @@ int main(){
 	entries.reserve(N); 
 	try{
 		int i =0;
+		int n = 0;
 
-		for(int x = 0; x < 100; x++){
-			std::cout << "\ninserting " << N <<  " ...";
+		for(int x = 1; x < 10; x++){
+			n = N;
+			std::cout << "\ninserting " << n <<  " ...";
 			std::cout.flush();
 			for(unsigned long i = x; i< N; i++){
 				entries[i] = QH::makeEntry((i+i)*x,i*0.09);
 				pq.insert(entries[i]);
 			}
-			std::cout << "\ndecreasing " << N/2 <<  " ...";
-			std::cout.flush();
+			n = N/x;
 			i =0;
-			for(EntryIterator it = entries.begin(); it != entries.end() && i< N/2 ; it++){
+			std::cout << "\ndecreasing " << n <<  " ...";
+			std::cout.flush();
+			for(EntryIterator it = entries.begin(); it != entries.end() && i< n; it++){
 				pq.decreaseKey(it->second, it->second->key()/2);
 				++i;
 			}		
 
-			std::cout << "\ndeleting-min " << N/2 <<  " ...";
-			std::cout.flush();
+			n = N/x;
 			i=0;
-			for(EntryIterator it = entries.begin(); it != entries.end() && i < N/2 ; it++){
+			std::cout << "\ndeleting-min " << n <<  " ...";
+			std::cout.flush();
+			for(EntryIterator it = entries.begin(); it != entries.end() && i < n ; it++){
 				pq.decreaseKey(it->second, it->second->key()/2);
 				++i;
 			}	
-			std::cout << "\ndecreasing " << N/2 <<  " ...";
-			std::cout.flush();
+			n = N/4*x;
 			i =0;
-			for(EntryIterator it = entries.begin(); it != entries.end() && i< N/4 ; it++){
+			std::cout << "\ndecreasing " <<n<<  " ...";
+			std::cout.flush();
+			for(EntryIterator it = entries.begin(); it != entries.end() && i< n ; it++){
 				pq.decreaseKey(it->second, it->second->key()/2);
 				++i;
 			}		
-			std::cout << "\ndeleting-min " << N/2 <<  " ...";
-			std::cout.flush();
+			n = N/2*x;
 			i=0;
-			for(EntryIterator it = entries.begin(); it != entries.end() && i < N/2 ; it++){
+			std::cout << "\ndeleting-min " << n <<  " ...";
+			std::cout.flush();
+			for(EntryIterator it = entries.begin(); it != entries.end() && i < n ; it++){
 				pq.decreaseKey(it->second, it->second->key()/2);
 				++i;
 			}	
@@ -53,11 +59,11 @@ int main(){
 		std::cout.flush();
 		i = 0;
 		while(!pq.empty()){
-			auto min = pq.deleteMin();
-			std::cout << min->key() << " ";
-			if(i%10)//flugh every 199
-				std::cout.flush();
 			++i;
+			auto min = pq.deleteMin();
+			std::cout << min->key() << "\n";
+			std::cout.flush();
+			
 		}
 	}catch(QH::Exception e){
 		std::cout << e.what() << "\n";

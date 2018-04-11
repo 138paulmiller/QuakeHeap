@@ -25,7 +25,11 @@ private:
 	//forward declare
 	struct TEntry;
 	struct TNode; 
-	
+	//type aliases used in node, and heap
+	using RootIterator = typename std::list< std::shared_ptr<TNode> >::iterator;
+
+	//types
+	//Entry is what user enter and removes
 	struct TEntry{
 		TEntry(){}
 		TEntry(Key k, Value v);
@@ -38,8 +42,6 @@ private:
 		std::shared_ptr<TNode> _node; //reference to highest node 
 	};
 
-	//type aliases
-	using RootIterator = typename std::list< std::shared_ptr<TNode> >::iterator;
 	// Tournament tree node, binary node with a pointer to the min entry
 	struct TNode{
 		TNode(std::shared_ptr<TEntry> e=nullptr);//create new entry leaf, unique param since e should have been created before
@@ -56,9 +58,9 @@ private:
 		inline std::string what(){return _msg;}
 		std::string _msg;
 	};
-	//utility
+	//utilities used by primary methods
 	inline void updateMin();
-	void shake(std::shared_ptr<TNode> root);
+	void shake(std::shared_ptr<TNode> root,bool isUpdateMin=false);
 	//ATTRIBUTES
 	//quake heap attr
 	RootIterator _minimum; //reference to Node with minimum entry 
@@ -67,11 +69,12 @@ private:
 	float _alpha; //alpha ratio that bounds tree heights
 
 public:
+	//public aliases for user
 	using Entry = typename std::shared_ptr<TEntry>;
 	using Exception = TException;
 
 	
-	QuakeHeap(float alpha=1);
+	QuakeHeap(float alpha=0.5);
 	virtual ~QuakeHeap();
 	//primary operations
 	void insert(std::shared_ptr<TEntry>& entry);
@@ -164,8 +167,9 @@ void QuakeHeap<Key, Value>::updateMin(){
 	}
 }
 
+//shake all valid nodes from path to decreased entry  into forest 
 template <typename Key, typename Value>
-void QuakeHeap<Key, Value>::shake(std::shared_ptr<TNode> root){
+void QuakeHeap<Key, Value>::shake(std::shared_ptr<TNode> root, bool isUpdateMin){
 	std::shared_ptr<TEntry> entry = root->_entry; 
 	while(root != nullptr ){
 		 //if left contains entry
@@ -174,13 +178,17 @@ void QuakeHeap<Key, Value>::shake(std::shared_ptr<TNode> root){
 			if(root->_r){
 				root->_r->_p = nullptr;
 				_forest.push_back(root->_r);
+				if(isUpdateMin)
+					updateMin();
 			}
 			root =root->_l;
 		}else if(root->_r && root->_r->_entry == entry){
 			//add right if nonnull
 			if(root->_l){
 				root->_l->_p = nullptr;
-				_forest.push_back(root->_l);	
+				_forest.push_back(root->_l);
+				if(isUpdateMin)
+					updateMin();	
 			}
 			root = root->_r;
 		}else
@@ -305,21 +313,18 @@ std::shared_ptr<typename QuakeHeap<Key, Value>::TEntry> QuakeHeap<Key, Value>::d
 			min_i = i;
 		}
 	}
-	// //todo remove all nodes at height i, add children to rootlist
+	//unset min 
+	_minimum = _forest.end();
+	// remove all nodes at height i, add children to rootlist
 	for(int i = 0; i < buckets.size(); ++i){
 		if(buckets[i].size() > 0){
 			if ( min_i != -1 && i > min_i){
-				shake(buckets[i].front());
+				shake(buckets[i].front(), true);
 			}else{
-
 				_forest.push_back(buckets[i].front());
+				updateMin();
 			}
 		}
-	}
-	_minimum = _forest.begin();
-	for(RootIterator it = ++_forest.begin(); it != _forest.end(); ++it){
-		if(  (*it)->_entry->_key < (*_minimum)->_entry->_key)
-			_minimum = it;
 	}
 	--_size;
 	return min_entry;
